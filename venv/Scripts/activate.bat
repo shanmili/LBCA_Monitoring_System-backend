@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\macos\Desktop\LBCA_Monitoring_System-backend-1\venv
+set VIRTUAL_ENV=C:\Users\Dell\Desktop\LBCA_Monitoring_System-backend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
