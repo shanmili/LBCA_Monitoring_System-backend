@@ -7,5 +7,7 @@ urlpatterns = [
     path('', include('school_years.urls')),
     path('', include('grade_levels.urls')),
     path('', include('sections.urls')),
+    path('', include('subjects.urls')),
+    path('', include('schedules.urls')),
     path('api/', include('students.urls')),
 ]
