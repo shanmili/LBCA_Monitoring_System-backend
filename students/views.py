@@ -7,8 +7,6 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import Student, StudentEnrollment
 from .serializers import StudentSerializer, StudentEnrollmentSerializer
-from collections import OrderedDict
-import json
 
 
 def is_admin(request):
@@ -150,26 +148,69 @@ def delete_student(request, student_id):
 @permission_classes([IsAuthenticated])
 def list_enrollments(request):
     """
-    List all student enrollments.
+    List all student enrollments with student names.
     Accessible by Admin and Teacher.
     """
-    enrollments = StudentEnrollment.objects.all()
-    serializer = StudentEnrollmentSerializer(enrollments, many=True)
-    return Response(serializer.data)
+    try:
+        enrollments = StudentEnrollment.objects.all()
+        data = []
+        for enrollment in enrollments:
+            data.append({
+                'id': enrollment.id,
+                'student_name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+                'student_id': enrollment.student.id,
+                'grade_level_id': enrollment.grade_level_id,
+                'section_id': enrollment.section_id,
+                'school_year_id': enrollment.school_year_id,
+                'is_active': enrollment.is_active,
+                'enrollment_date': enrollment.enrollment_date.isoformat() if enrollment.enrollment_date else None,
+                'enrolled_by_id': enrollment.enrolled_by.teacher_id if enrollment.enrolled_by else None,
+            })
+        return Response(data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_enrollment(request, enrollment_id):
     """
-    Retrieve a single enrollment by ID.
+    Retrieve a single enrollment by ID with student name.
     """
     try:
         enrollment = StudentEnrollment.objects.get(pk=enrollment_id)
-        serializer = StudentEnrollmentSerializer(enrollment)
-        return Response(serializer.data)
+        data = {
+            'id': enrollment.id,
+            'student_name': f"{enrollment.student.first_name} {enrollment.student.last_name}",
+            'student_id': enrollment.student.id,
+            'student': {
+                'id': enrollment.student.id,
+                'first_name': enrollment.student.first_name,
+                'middle_name': enrollment.student.middle_name,
+                'last_name': enrollment.student.last_name,
+                'birth_date': str(enrollment.student.birth_date) if enrollment.student.birth_date else None,
+                'gender': enrollment.student.gender,
+                'address': enrollment.student.address,
+                'guardian_first_name': enrollment.student.guardian_first_name,
+                'guardian_mid_name': enrollment.student.guardian_mid_name,
+                'guardian_last_name': enrollment.student.guardian_last_name,
+                'guardian_contact': enrollment.student.guardian_contact,
+                'relationship': enrollment.student.relationship,
+            },
+            'enrollment': {
+                'grade_level_id': enrollment.grade_level_id,
+                'section_id': enrollment.section_id,
+                'school_year_id': enrollment.school_year_id,
+                'is_active': enrollment.is_active,
+                'enrollment_date': enrollment.enrollment_date.isoformat() if enrollment.enrollment_date else None,
+                'enrolled_by_id': enrollment.enrolled_by.teacher_id if enrollment.enrolled_by else None,
+            }
+        }
+        return Response(data)
     except StudentEnrollment.DoesNotExist:
         return Response({'error': 'Enrollment not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -177,11 +218,38 @@ def get_enrollment(request, enrollment_id):
 def create_enrollment(request):
     """
     Create a new student enrollment. Admin and Teacher only.
+    
+    TWO FLOWS:
+    1. EXISTING STUDENT - Enroll by student ID:
+       {
+           "student": 16,
+           "grade_level": 1,
+           "section": 1,
+           "school_year": 1
+       }
+       Personal data pulled from Student table.
+    
+    2. NEW STUDENT - Create student & enroll:
+       {
+           "first_name": "John",
+           "last_name": "Doe",
+           "birth_date": "2010-01-15",
+           "gender": "Male",
+           "address": "123 Main St",
+           "guardian_first_name": "Jane",
+           "guardian_last_name": "Doe",
+           "guardian_contact": "555-1234",
+           "relationship": "Parent",
+           "grade_level": 1,
+           "section": 1,
+           "school_year": 1
+       }
+       Creates Student record, then enrolls them.
     """
     if not (is_admin(request) or hasattr(request.user, 'teacher_profile')):
         return Response({'error': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
     
-    serializer = StudentEnrollmentSerializer(data=request.data)
+    serializer = StudentEnrollmentSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         enrollment = serializer.save()
         return Response(
@@ -235,29 +303,3 @@ def delete_enrollment(request, enrollment_id):
         return Response({'message': 'Enrollment deleted successfully.'})
     except StudentEnrollment.DoesNotExist:
         return Response({'error': 'Enrollment not found.'}, status=status.HTTP_404_NOT_FOUND)
-        if not request.user.is_staff and not hasattr(request.user, 'teacher_profile'):
-            return Response({
-                "message": "Access denied. Only admins and teachers can enroll students."
-            }, status=status.HTTP_403_FORBIDDEN)
-
-        serializer = self.get_serializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        enrollment = serializer.save()
-
-        return Response({
-            "message": "Student enrolled successfully!",
-            "enrollment_id": enrollment.id,
-            "student": {
-                "student_id": enrollment.student.id,
-                "name": f"{enrollment.student.first_name} {enrollment.student.last_name}",
-                "username": enrollment.student.user.username,
-            },
-            "enrollment": {
-                "grade_level": enrollment.grade_level_id,
-                "section": enrollment.section_id,
-                "school_year": enrollment.school_year_id,
-                "enrolled_by": enrollment.enrolled_by.first_name if enrollment.enrolled_by else request.user.username,
-                "is_active": enrollment.is_active,
-                "enrollment_date": enrollment.enrollment_date,
-            }
-        }, status=status.HTTP_201_CREATED)
