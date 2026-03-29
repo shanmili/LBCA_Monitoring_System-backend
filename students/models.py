@@ -27,7 +27,12 @@ class Student(models.Model):
     relationship = models.CharField(max_length=10, choices=RELATIONSHIP_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_students')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_students'
+    )
 
     class Meta:
         db_table = 'students'
@@ -44,15 +49,45 @@ class StudentEnrollment(models.Model):
         ('Graduated', 'Graduated'),
     ]
 
-    student = models.ForeignKey('students.Student', on_delete=models.CASCADE, related_name='enrollments')
-    grade_level = models.ForeignKey('grade_levels.GradeLevel', on_delete=models.PROTECT)
-    section = models.ForeignKey('sections.Section', on_delete=models.PROTECT)
-    enrolled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='enrolled_students')
-    next_grade_level = models.ForeignKey('grade_levels.GradeLevel', on_delete=models.SET_NULL, null=True, blank=True, related_name='next_grade_enrollments')
-    school_year = models.ForeignKey('school_years.SchoolYear', on_delete=models.PROTECT)
+    student = models.ForeignKey(
+        'students.Student',
+        on_delete=models.CASCADE,
+        related_name='enrollments'
+    )
+    grade_level = models.ForeignKey(
+        'grade_levels.GradeLevel',
+        on_delete=models.PROTECT
+    )
+    section = models.ForeignKey(
+        'sections.Section',
+        on_delete=models.PROTECT
+    )
+    enrolled_by = models.ForeignKey(
+        'teachers.Teacher',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='enrolled_students'
+    )
+    next_grade_level = models.ForeignKey(
+        'grade_levels.GradeLevel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='next_grade_enrollments'
+    )
+    school_year = models.ForeignKey(
+        'school_years.SchoolYear',
+        on_delete=models.PROTECT
+    )
     enrollment_date = models.DateField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    end_of_year_status = models.CharField(max_length=20, choices=END_OF_YEAR_CHOICES, null=True, blank=True)
+    end_of_year_status = models.CharField(
+        max_length=20,
+        choices=END_OF_YEAR_CHOICES,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         db_table = 'student_enrollments'

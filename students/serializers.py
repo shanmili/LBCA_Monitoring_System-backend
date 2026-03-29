@@ -2,8 +2,14 @@ from rest_framework import serializers
 from .models import Student, StudentEnrollment
 from django.contrib.auth.models import User
 
+
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = '__all__'
+
+
 class StudentEnrollmentSerializer(serializers.ModelSerializer):
-    # Student fields nested inside enrollment form
     first_name = serializers.CharField(write_only=True)
     middle_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
     last_name = serializers.CharField(write_only=True)
@@ -24,7 +30,7 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
             'gender', 'address', 'guardian_first_name', 'guardian_mid_name',
             'guardian_last_name', 'guardian_contact', 'relationship',
             # Enrollment fields
-            'grade_level', 'section', 'school_year', 'enrolled_by', 'is_active',
+            'grade_level', 'section', 'school_year', 'is_active',
         ]
 
     def create(self, validated_data):
@@ -43,7 +49,12 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
             'relationship': validated_data.pop('relationship'),
         }
 
-        # Auto create a user for the student
+        logged_in_user = self.context['request'].user
+
+        # Get teacher profile if teacher, None if admin
+        teacher_profile = getattr(logged_in_user, 'teacher_profile', None)
+
+        # Auto create user account for the student
         user = User.objects.create_user(
             username=f"{student_data['first_name'].lower()}.{student_data['last_name'].lower()}",
             password="defaultpassword123"
@@ -52,20 +63,15 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
         # Create student record
         student = Student.objects.create(
             user=user,
-            created_by=validated_data.get('enrolled_by'),
+            created_by=logged_in_user,
             **student_data
         )
 
         # Create enrollment record
         enrollment = StudentEnrollment.objects.create(
             student=student,
+            enrolled_by=teacher_profile,  # FK to teachers table, None if admin
             **validated_data
         )
 
         return enrollment
-
-
-class StudentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Student
-        fields = '__all__'
