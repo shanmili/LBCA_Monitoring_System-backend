@@ -42,7 +42,10 @@ INSTALLED_APPS = [
     'teachers',
     'students',
     'student_pace',
-    'data_quality_log'
+    'data_quality_log',
+    'school_years',
+    'grade_levels',
+    'sections',
 ]
 
 MIDDLEWARE = [
