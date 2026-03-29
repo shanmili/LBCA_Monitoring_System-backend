@@ -38,3 +38,38 @@ class Teacher(models.Model):
     
     class Meta:
         ordering = ['teacher_id']
+
+
+class TeacherAssignment(models.Model):
+    assignment_id = models.AutoField(primary_key=True)
+    section = models.ForeignKey(
+        'sections.Section',
+        on_delete=models.CASCADE,
+        related_name='teacher_assignments'
+    )
+    teacher = models.ForeignKey(
+        'teachers.Teacher',
+        on_delete=models.CASCADE,
+        related_name='teaching_assignments'
+    )
+    subject = models.ForeignKey(
+        'subjects.Subject',
+        on_delete=models.CASCADE,
+        related_name='teacher_assignments'
+    )
+    schedule = models.ForeignKey(
+        'schedules.ClassSchedule',
+        on_delete=models.CASCADE,
+        related_name='teacher_assignments'
+    )
+    school_year = models.ForeignKey(
+        'school_years.SchoolYear',
+        on_delete=models.CASCADE,
+        related_name='teacher_assignments'
+    )
+
+    def __str__(self):
+        return f"{self.teacher.user.username} - {self.subject.subject_code} ({self.section.section_code})"
+
+    class Meta:
+        ordering = ['school_year', 'section', 'subject']

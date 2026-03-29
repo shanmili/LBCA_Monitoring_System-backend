@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Teacher  # Import Teacher from models
+from .models import Teacher, TeacherAssignment
 
 class TeacherSerializer(serializers.ModelSerializer):
     """Serializer for viewing teacher data"""
@@ -127,3 +127,48 @@ class TeacherUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         instance.user.save()
         return instance
+
+
+class TeacherAssignmentSerializer(serializers.ModelSerializer):
+    teacher_username = serializers.CharField(source='teacher.user.username', read_only=True)
+    section_code = serializers.CharField(source='section.section_code', read_only=True)
+    subject_code = serializers.CharField(source='subject.subject_code', read_only=True)
+    school_year_display = serializers.CharField(source='school_year.year', read_only=True)
+    schedule_display = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TeacherAssignment
+        fields = [
+            'assignment_id',
+            'section',
+            'section_code',
+            'teacher',
+            'teacher_username',
+            'subject',
+            'subject_code',
+            'schedule',
+            'schedule_display',
+            'school_year',
+            'school_year_display',
+        ]
+        read_only_fields = ['assignment_id']
+
+    def get_schedule_display(self, obj):
+        return f"{obj.schedule.day} {obj.schedule.start_time}-{obj.schedule.end_time}"
+
+    def validate(self, attrs):
+        section = attrs.get('section') or getattr(self.instance, 'section', None)
+        schedule = attrs.get('schedule') or getattr(self.instance, 'schedule', None)
+        subject = attrs.get('subject') or getattr(self.instance, 'subject', None)
+
+        if section and schedule and schedule.section_id != section.section_id:
+            raise serializers.ValidationError(
+                {'schedule': 'Schedule must belong to the selected section.'}
+            )
+
+        if section and subject and subject.grade_level_id != section.grade_level_id:
+            raise serializers.ValidationError(
+                {'subject': 'Subject grade level must match the section grade level.'}
+            )
+
+        return attrs

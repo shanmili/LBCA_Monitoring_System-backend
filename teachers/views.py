@@ -4,10 +4,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from .models import Teacher
+from .models import Teacher, TeacherAssignment
 from .serializers import (
     TeacherSerializer, AdminRegisterSerializer,
-    TeacherCreateSerializer, TeacherUpdateSerializer
+    TeacherCreateSerializer, TeacherUpdateSerializer,
+    TeacherAssignmentSerializer
 )
 
 # ==================== AUTHENTICATION ====================
@@ -207,3 +208,110 @@ def reactivate_teacher(request, teacher_id):
         
     except Teacher.DoesNotExist:
         return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ==================== TEACHER ASSIGNMENTS ====================
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_teacher_assignments(request):
+    """
+    List teacher assignments.
+    Optional filters: ?teacher_id=1&section_id=2&school_year_id=1
+    """
+    assignments = TeacherAssignment.objects.all()
+
+    teacher_id = request.query_params.get('teacher_id')
+    section_id = request.query_params.get('section_id')
+    school_year_id = request.query_params.get('school_year_id')
+
+    if teacher_id:
+        assignments = assignments.filter(teacher__teacher_id=teacher_id)
+    if section_id:
+        assignments = assignments.filter(section__section_id=section_id)
+    if school_year_id:
+        assignments = assignments.filter(school_year__school_year_id=school_year_id)
+
+    serializer = TeacherAssignmentSerializer(assignments, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_teacher_assignment(request, assignment_id):
+    """
+    Retrieve a single teacher assignment.
+    """
+    try:
+        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
+    except TeacherAssignment.DoesNotExist:
+        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TeacherAssignmentSerializer(assignment)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_teacher_assignment(request):
+    """
+    Create teacher assignment. Admin only.
+    """
+    if request.user.teacher_profile.role != 'Admin':
+        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = TeacherAssignmentSerializer(data=request.data)
+    if serializer.is_valid():
+        assignment = serializer.save()
+        return Response(
+            {
+                'message': 'Teacher assignment created successfully.',
+                'assignment': TeacherAssignmentSerializer(assignment).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_teacher_assignment(request, assignment_id):
+    """
+    Update teacher assignment. Admin only.
+    """
+    if request.user.teacher_profile.role != 'Admin':
+        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
+    except TeacherAssignment.DoesNotExist:
+        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = TeacherAssignmentSerializer(assignment, data=request.data, partial=True)
+    if serializer.is_valid():
+        updated_assignment = serializer.save()
+        return Response(
+            {
+                'message': 'Teacher assignment updated successfully.',
+                'assignment': TeacherAssignmentSerializer(updated_assignment).data,
+            }
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_teacher_assignment(request, assignment_id):
+    """
+    Delete teacher assignment. Admin only.
+    """
+    if request.user.teacher_profile.role != 'Admin':
+        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
+    except TeacherAssignment.DoesNotExist:
+        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    assignment.delete()
+    return Response({'message': 'Teacher assignment deleted successfully.'}, status=status.HTTP_200_OK)
