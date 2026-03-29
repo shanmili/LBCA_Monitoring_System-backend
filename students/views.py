@@ -7,6 +7,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import Student, StudentEnrollment
 from .serializers import StudentSerializer, StudentEnrollmentSerializer
+from collections import OrderedDict
+import json
 
 
 def is_admin(request):
@@ -78,17 +80,21 @@ def get_student(request, student_id):
 def create_student(request):
     """
     Create a new student. Admin only.
+    User account is auto-created from first_name and last_name.
     """
     if not is_admin(request):
         return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
     
     serializer = StudentSerializer(data=request.data)
     if serializer.is_valid():
-        student = serializer.save()
+        # Save with created_by automatically set to current user
+        student = serializer.save(created_by=request.user)
+        student_data = serializer.data
+        
         return Response(
             {
                 'message': 'Student created successfully.',
-                'student': StudentSerializer(student).data
+                'student': student_data
             },
             status=status.HTTP_201_CREATED
         )
