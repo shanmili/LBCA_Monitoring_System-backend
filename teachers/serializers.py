@@ -59,10 +59,12 @@ class AdminRegisterSerializer(serializers.ModelSerializer):
         return teacher
 
 class TeacherCreateSerializer(serializers.ModelSerializer):
-    """Admin creates teacher account - username auto-generated"""
+    """Admin creates teacher account - username auto-generated, password optional"""
+    password = serializers.CharField(write_only=True, required=False, min_length=6, allow_blank=True)
+    
     class Meta:
         model = Teacher
-        fields = []
+        fields = ['password']
     
     def create(self, validated_data):
         # Get the logged-in admin's Teacher instance
@@ -73,10 +75,13 @@ class TeacherCreateSerializer(serializers.ModelSerializer):
         next_number = teacher_count + 1
         username = f"TCH{next_number:03d}"
         
-        # Create Django User (username = TCH001, password = same)
+        # Use provided password or default to username
+        password = validated_data.get('password') or username
+        
+        # Create Django User
         user = User.objects.create_user(
             username=username,
-            password=username
+            password=password
         )
         
         # Create Teacher
@@ -91,7 +96,7 @@ class TeacherCreateSerializer(serializers.ModelSerializer):
         return {
             'teacher_id': teacher.teacher_id,
             'username': username,
-            'password': username,
+            'password': password,
             'is_first_login': True
         }
 

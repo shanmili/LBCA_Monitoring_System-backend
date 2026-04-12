@@ -6,6 +6,7 @@ urlpatterns = [
     path('api/admin/register/', views.admin_register, name='admin-register'),
     
     # Authentication
+    path('api/admin/login/', views.admin_login, name='admin-login'),
     path('api/teacher/login/', views.teacher_login, name='teacher-login'),
     path('api/teacher/logout/', views.teacher_logout, name='teacher-logout'),
     

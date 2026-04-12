@@ -1,0 +1,301 @@
+{
+  "schoolYears": [
+    "2025-2026",
+    "2024-2025",
+    "2023-2024"
+  ],
+  "teachersData": [
+    {
+      "id": "T001",
+      "username": "teacher_juan",
+      "password": "temp123",
+      "status": "active"
+    },
+    {
+      "id": "T002",
+      "username": "teacher_maria",
+      "password": "temp123",
+      "status": "active"
+    },
+    {
+      "id": "T003",
+      "username": "teacher_ana",
+      "password": "temp123",
+      "status": "active"
+    },
+    {
+      "id": "T004",
+      "username": "teacher_carlos",
+      "password": "temp123",
+      "status": "inactive"
+    },
+    {
+      "id": "T005",
+      "username": "teacher_lisa",
+      "password": "temp123",
+      "status": "active"
+    }
+  ],
+  "studentsData": [
+    {
+      "id": "S001",
+      "firstName": "Mateo",
+      "middleName": "D",
+      "lastName": "Alvarez",
+      "dateOfBirth": "2008-05-15",
+      "gender": "Male",
+      "address": "123 Mabini St., Davao City",
+      "guardianFirstName": "Roberto",
+      "guardianMiddleName": "M",
+      "guardianLastName": "Alvarez",
+      "guardianContact": "09171234567",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 10",
+      "section": "Section A",
+      "status": "Behind",
+      "pacePercent": 52,
+      "attendance": 88,
+      "riskLevel": "High",
+      "subjects": [
+        { "name": "Math", "completed": 4, "total": 6 },
+        { "name": "English", "completed": 3, "total": 6 },
+        { "name": "Science", "completed": 5, "total": 6 },
+        { "name": "Filipino", "completed": 4, "total": 6 }
+      ]
+    },
+    {
+      "id": "S002",
+      "firstName": "Sophia",
+      "middleName": "R",
+      "lastName": "Cruz",
+      "dateOfBirth": "2008-08-22",
+      "gender": "Female",
+      "address": "456 Rizal St., Davao City",
+      "guardianFirstName": "Maria",
+      "guardianMiddleName": "R",
+      "guardianLastName": "Cruz",
+      "guardianContact": "09179876543",
+      "guardianRelationship": "Mother",
+      "gradeLevel": "Grade 10",
+      "section": "Section B",
+      "status": "Behind",
+      "pacePercent": 65,
+      "attendance": 91,
+      "riskLevel": "Medium",
+      "subjects": [
+        { "name": "Math", "completed": 5, "total": 6 },
+        { "name": "English", "completed": 4, "total": 6 },
+        { "name": "Science", "completed": 5, "total": 6 },
+        { "name": "Filipino", "completed": 5, "total": 6 }
+      ]
+    },
+    {
+      "id": "S003",
+      "firstName": "Gabriel",
+      "middleName": "S",
+      "lastName": "Santos",
+      "dateOfBirth": "2008-03-10",
+      "gender": "Male",
+      "address": "789 Bonifacio St., Davao City",
+      "guardianFirstName": "Jose",
+      "guardianMiddleName": "S",
+      "guardianLastName": "Santos",
+      "guardianContact": "09171239876",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 10",
+      "section": "Section B",
+      "status": "On Track",
+      "pacePercent": 82,
+      "attendance": 95,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 6, "total": 6 },
+        { "name": "English", "completed": 5, "total": 6 },
+        { "name": "Science", "completed": 6, "total": 6 },
+        { "name": "Filipino", "completed": 5, "total": 6 }
+      ]
+    },
+    {
+      "id": "S004",
+      "firstName": "Karl",
+      "middleName": "M",
+      "lastName": "Mendoza",
+      "dateOfBirth": "2008-11-30",
+      "gender": "Male",
+      "address": "101 Quezon St., Davao City",
+      "guardianFirstName": "Elena",
+      "guardianMiddleName": "M",
+      "guardianLastName": "Mendoza",
+      "guardianContact": "09175432109",
+      "guardianRelationship": "Mother",
+      "gradeLevel": "Grade 10",
+      "section": "Section B",
+      "status": "Behind",
+      "pacePercent": 60,
+      "attendance": 70,
+      "riskLevel": "High",
+      "subjects": [
+        { "name": "Math", "completed": 3, "total": 6 },
+        { "name": "English", "completed": 4, "total": 6 },
+        { "name": "Science", "completed": 3, "total": 6 },
+        { "name": "Filipino", "completed": 4, "total": 6 }
+      ]
+    },
+    {
+      "id": "S005",
+      "firstName": "Aisha",
+      "middleName": "D",
+      "lastName": "Reyes",
+      "dateOfBirth": "2007-05-18",
+      "gender": "Female",
+      "address": "202 Lopez Jaena St., Davao City",
+      "guardianFirstName": "Ramon",
+      "guardianMiddleName": "D",
+      "guardianLastName": "Reyes",
+      "guardianContact": "09176543210",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 11",
+      "section": "Section C",
+      "status": "On Track",
+      "pacePercent": 90,
+      "attendance": 98,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 6, "total": 6 },
+        { "name": "English", "completed": 6, "total": 6 },
+        { "name": "Science", "completed": 5, "total": 6 },
+        { "name": "Filipino", "completed": 6, "total": 6 }
+      ]
+    },
+    {
+      "id": "S006",
+      "firstName": "Luis",
+      "middleName": "G",
+      "lastName": "Bautista",
+      "dateOfBirth": "2007-09-25",
+      "gender": "Male",
+      "address": "303 Mabuhay St., Davao City",
+      "guardianFirstName": "Carmen",
+      "guardianMiddleName": "G",
+      "guardianLastName": "Bautista",
+      "guardianContact": "09174321098",
+      "guardianRelationship": "Mother",
+      "gradeLevel": "Grade 11",
+      "section": "Section C",
+      "status": "Behind",
+      "pacePercent": 44,
+      "attendance": 80,
+      "riskLevel": "High",
+      "subjects": [
+        { "name": "Math", "completed": 2, "total": 6 },
+        { "name": "English", "completed": 3, "total": 6 },
+        { "name": "Science", "completed": 2, "total": 6 },
+        { "name": "Filipino", "completed": 3, "total": 6 }
+      ]
+    },
+    {
+      "id": "S007",
+      "firstName": "Shanmae Leigh",
+      "middleName": "P",
+      "lastName": "de Gala",
+      "dateOfBirth": "2008-02-14",
+      "gender": "Female",
+      "address": "404 San Pedro St., Davao City",
+      "guardianFirstName": "Ricardo",
+      "guardianMiddleName": "P",
+      "guardianLastName": "de Gala",
+      "guardianContact": "09177654321",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 10",
+      "section": "Section A",
+      "status": "On Track",
+      "pacePercent": 85,
+      "attendance": 96,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 6, "total": 6 },
+        { "name": "English", "completed": 5, "total": 6 },
+        { "name": "Science", "completed": 6, "total": 6 },
+        { "name": "Filipino", "completed": 5, "total": 6 }
+      ]
+    },
+    {
+      "id": "S008",
+      "firstName": "Sef Rowinston",
+      "middleName": "M",
+      "lastName": "Maco",
+      "dateOfBirth": "2008-07-08",
+      "gender": "Male",
+      "address": "505 Claveria St., Davao City",
+      "guardianFirstName": "Rosario",
+      "guardianMiddleName": "M",
+      "guardianLastName": "Maco",
+      "guardianContact": "09178899001",
+      "guardianRelationship": "Mother",
+      "gradeLevel": "Grade 10",
+      "section": "Section B",
+      "status": "On Track",
+      "pacePercent": 78,
+      "attendance": 93,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 5, "total": 6 },
+        { "name": "English", "completed": 5, "total": 6 },
+        { "name": "Science", "completed": 5, "total": 6 },
+        { "name": "Filipino", "completed": 4, "total": 6 }
+      ]
+    },
+    {
+      "id": "S009",
+      "firstName": "Keybird",
+      "middleName": "N",
+      "lastName": "Evasco",
+      "dateOfBirth": "2008-12-03",
+      "gender": "Male",
+      "address": "606 Ramon Magsaysay St., Davao City",
+      "guardianFirstName": "Rogelio",
+      "guardianMiddleName": "N",
+      "guardianLastName": "Evasco",
+      "guardianContact": "09171223344",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 10",
+      "section": "Section B",
+      "status": "On Track",
+      "pacePercent": 88,
+      "attendance": 97,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 6, "total": 6 },
+        { "name": "English", "completed": 5, "total": 6 },
+        { "name": "Science", "completed": 6, "total": 6 },
+        { "name": "Filipino", "completed": 5, "total": 6 }
+      ]
+    },
+    {
+      "id": "S010",
+      "firstName": "Norhaifah",
+      "middleName": "P",
+      "lastName": "Alion",
+      "dateOfBirth": "2007-04-19",
+      "gender": "Female",
+      "address": "707 San Jose St., Davao City",
+      "guardianFirstName": "Abdullah",
+      "guardianMiddleName": "P",
+      "guardianLastName": "Alion",
+      "guardianContact": "09175566778",
+      "guardianRelationship": "Father",
+      "gradeLevel": "Grade 11",
+      "section": "Section C",
+      "status": "On Track",
+      "pacePercent": 83,
+      "attendance": 95,
+      "riskLevel": "Low",
+      "subjects": [
+        { "name": "Math", "completed": 5, "total": 6 },
+        { "name": "English", "completed": 6, "total": 6 },
+        { "name": "Science", "completed": 5, "total": 6 },
+        { "name": "Filipino", "completed": 5, "total": 6 }
+      ]
+    }
+  ]
+}
