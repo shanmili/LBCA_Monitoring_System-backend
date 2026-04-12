@@ -39,6 +39,44 @@ def admin_register(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def admin_login(request):
+    """
+    Admin-only login using username (ADMIN001, ADMIN002, etc.) and password
+    """
+    username = request.data.get('username')
+    password = request.data.get('password')
+    
+    # Authenticate using Django's User model
+    user = authenticate(username=username, password=password)
+    
+    if user and hasattr(user, 'teacher_profile'):
+        teacher = user.teacher_profile
+        
+        # Check if user is an admin
+        if teacher.role != 'Admin':
+            return Response({'error': 'Admin access required. You are not an admin.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Check if account is active
+        if teacher.status != 'Active':
+            return Response({'error': 'Account is deactivated. Contact system administrator.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        token, created = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            'message': 'Admin login successful',
+            'token': token.key,
+            'username': user.username,
+            'teacher_id': teacher.teacher_id,
+            'role': teacher.role,
+            'first_name': teacher.first_name,
+            'last_name': teacher.last_name,
+            'is_first_login': teacher.is_first_login
+        })
+    
+    return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def teacher_login(request):
     """
     Teacher/Admin login using username (ADMIN001, TCH001) and password
