@@ -9,7 +9,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teacher
         fields = ['teacher_id', 'username', 'email', 'first_name', 'middle_name', 
-                  'last_name', 'contact_number', 'role', 'status', 'is_first_login']
+                  'last_name', 'contact_number', 'role', 'status', 'is_first_login', 'created_at', 'updated_at']
         read_only_fields = ['teacher_id', 'created_at', 'updated_at']
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
