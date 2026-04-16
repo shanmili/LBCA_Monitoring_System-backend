@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     '192.168.101.77',
+    '192.168.137.223',
 ]
 
 
@@ -154,4 +155,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
+
+# Session timeout for Django admin and other session-authenticated views.
+# 5 minutes idle timeout: every request refreshes the expiry window.
+SESSION_COOKIE_AGE = 60 * 5
+SESSION_SAVE_EVERY_REQUEST = True

@@ -1,8 +1,39 @@
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.permissions import AllowAny
+from rest_framework.schemas import get_schema_view
+
+try:
+    from drf_yasg.views import get_schema_view as get_swagger_schema_view
+    from drf_yasg import openapi
+except ImportError:  # Optional dependency for Swagger UI
+    get_swagger_schema_view = None
+
+openapi_schema_view = get_schema_view(
+    title='LBCA Monitoring API',
+    description='API schema for localhost testing and documentation.',
+    version='1.0.0',
+    public=True,
+    permission_classes=[AllowAny],
+)
+
+if get_swagger_schema_view:
+    swagger_schema_view = get_swagger_schema_view(
+        openapi.Info(
+            title='LBCA Monitoring API',
+            default_version='v1',
+            description='Swagger documentation for LBCA backend endpoints.',
+        ),
+        public=True,
+        permission_classes=(AllowAny,),
+    )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/token/', obtain_auth_token, name='api-token'),
+    path('api/v1/', include('students.urls')),
+    path('api/schema/', openapi_schema_view, name='openapi-schema'),
     path('', include('teachers.urls')),
     path('', include('parents.urls')),
     path('', include('school_years.urls')),
@@ -13,3 +44,9 @@ urlpatterns = [
     path('', include('student_pace.urls')),
     path('api/', include('students.urls')),
 ]
+
+if get_swagger_schema_view:
+    urlpatterns += [
+        path('swagger/', swagger_schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+        path('swagger.json/', swagger_schema_view.without_ui(cache_timeout=0), name='schema-swagger-json'),
+    ]

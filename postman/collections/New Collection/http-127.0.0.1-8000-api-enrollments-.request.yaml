@@ -1,0 +1,42 @@
+$kind: http-request
+name: http://127.0.0.1:8000/api/enrollments/
+url: http://127.0.0.1:8000/api/enrollments/
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"first_name\": \"Juan\",\r
+
+    \  \"middle_name\": \"Santos\",\r
+
+    \  \"last_name\": \"Dela Cruz\",\r
+
+    \  \"birth_date\": \"2012-05-10\",\r
+
+    \  \"gender\": \"Male\",\r
+
+    \  \"address\": \"Barangay 1, City\",\r
+
+    \  \"guardian_first_name\": \"Maria\",\r
+
+    \  \"guardian_mid_name\": \"\",\r
+
+    \  \"guardian_last_name\": \"Dela Cruz\",\r
+
+    \  \"guardian_contact\": \"09123456789\",\r
+
+    \  \"relationship\": \"Parent\",\r
+
+    \  \"grade_level\": 1,\r
+
+    \  \"section\": 1,\r
+
+    \  \"school_year\": 1,\r
+
+    \  \"enrolled_by\": 1,\r
+
+    \  \"is_active\": true\r
+
+    }"
+order: 4446350641718775

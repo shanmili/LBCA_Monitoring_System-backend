@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Student, StudentEnrollment
 from django.contrib.auth.models import User
+from django.db import IntegrityError, transaction
+import uuid
 
 class StudentEnrollmentSerializer(serializers.ModelSerializer):
     # Student fields nested inside enrollment form
@@ -27,6 +29,9 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
             'grade_level', 'section', 'school_year', 'enrolled_by', 'is_active',
         ]
 
+    def _generate_temporary_username(self):
+        return f"tmp_student_{uuid.uuid4().hex[:16]}"
+
     def create(self, validated_data):
         # Extract student fields
         student_data = {
@@ -43,26 +48,43 @@ class StudentEnrollmentSerializer(serializers.ModelSerializer):
             'relationship': validated_data.pop('relationship'),
         }
 
-        # Auto create a user for the student
-        user = User.objects.create_user(
-            username=f"{student_data['first_name'].lower()}.{student_data['last_name'].lower()}",
-            password="defaultpassword123"
-        )
+        try:
+            with transaction.atomic():
+                # Create a temporary user first, then rename it to S### once student ID exists.
+                temp_username = self._generate_temporary_username()
+                user = User.objects.create_user(
+                    username=temp_username,
+                    password=temp_username
+                )
 
-        # Create student record
-        student = Student.objects.create(
-            user=user,
-            created_by=validated_data.get('enrolled_by'),
-            **student_data
-        )
+                # Create student record
+                student = Student.objects.create(
+                    user=user,
+                    created_by=validated_data.get('enrolled_by'),
+                    **student_data
+                )
 
-        # Create enrollment record
-        enrollment = StudentEnrollment.objects.create(
-            student=student,
-            **validated_data
-        )
+                student_login_id = f"S{student.id:03d}"
+                if User.objects.filter(username=student_login_id).exclude(pk=user.pk).exists():
+                    raise serializers.ValidationError({
+                        'detail': f'Generated Student ID {student_login_id} is already used as a username.'
+                    })
 
-        return enrollment
+                user.username = student_login_id
+                user.set_password(student_login_id)
+                user.save(update_fields=['username', 'password'])
+
+                # Create enrollment record
+                enrollment = StudentEnrollment.objects.create(
+                    student=student,
+                    **validated_data
+                )
+
+                return enrollment
+        except IntegrityError as exc:
+            raise serializers.ValidationError({
+                'detail': 'Unable to create enrollment due to related data constraints. Verify referenced IDs and try again.'
+            }) from exc
 
 
 class StudentSerializer(serializers.ModelSerializer):

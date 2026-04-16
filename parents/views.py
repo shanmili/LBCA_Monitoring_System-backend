@@ -58,6 +58,7 @@ def parent_login(request):
             'username': user.username,
             'parent_id': parent.id,
             'student_id': parent.student.id,
+            'student_login_id': f"S{parent.student.id:03d}",
             'student_name': f"{parent.student.first_name} {parent.student.last_name}",
             'parent_name': f"{parent.first_name} {parent.last_name}",
             'relationship': parent.relationship,
@@ -118,6 +119,7 @@ def get_student_info(request):
         
         return Response({
             'student_id': student.id,
+            'student_login_id': f"S{student.id:03d}",
             'first_name': student.first_name,
             'middle_name': student.middle_name,
             'last_name': student.last_name,
