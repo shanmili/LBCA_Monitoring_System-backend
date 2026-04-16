@@ -2,9 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('api/subjects/', views.list_subjects, name='list-subjects'),
-    path('api/subjects/create/', views.create_subject, name='create-subject'),
-    path('api/subjects/<int:subject_id>/', views.get_subject, name='get-subject'),
-    path('api/subjects/<int:subject_id>/update/', views.update_subject, name='update-subject'),
-    path('api/subjects/<int:subject_id>/delete/', views.delete_subject, name='delete-subject'),
+    path('api/subjects/', views.subjects_list_create, name='subjects-list-create'),
+    path('api/v1/subjects/', views.subjects_list_create, name='v1-subjects-list-create'),
+    path('api/subjects/<int:subject_id>/', views.subject_detail, name='subject-detail'),
+    path('api/v1/subjects/<int:subject_id>/', views.subject_detail, name='v1-subject-detail'),
 ]

@@ -2,9 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('api/schedules/', views.list_schedules, name='list-schedules'),
-    path('api/schedules/create/', views.create_schedule, name='create-schedule'),
-    path('api/schedules/<int:schedule_id>/', views.get_schedule, name='get-schedule'),
-    path('api/schedules/<int:schedule_id>/update/', views.update_schedule, name='update-schedule'),
-    path('api/schedules/<int:schedule_id>/delete/', views.delete_schedule, name='delete-schedule'),
+    path('api/schedules/', views.schedules_list_create, name='schedules-list-create'),
+    path('api/v1/schedules/', views.schedules_list_create, name='v1-schedules-list-create'),
+    path('api/schedules/<int:schedule_id>/', views.schedule_detail, name='schedule-detail'),
+    path('api/v1/schedules/<int:schedule_id>/', views.schedule_detail, name='v1-schedule-detail'),
 ]

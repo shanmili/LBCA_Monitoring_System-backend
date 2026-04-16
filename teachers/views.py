@@ -1,9 +1,10 @@
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from drf_yasg.utils import swagger_auto_schema
 from .models import Teacher, TeacherAssignment
 from .serializers import (
     TeacherSerializer, AdminRegisterSerializer,
@@ -13,6 +14,7 @@ from .serializers import (
 
 # ==================== AUTHENTICATION ====================
 
+@swagger_auto_schema(method='post', request_body=AdminRegisterSerializer)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def admin_register(request):
@@ -37,6 +39,7 @@ def admin_register(request):
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def admin_login(request):
@@ -75,6 +78,7 @@ def admin_login(request):
     
     return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def teacher_login(request):
@@ -109,6 +113,7 @@ def teacher_login(request):
     
     return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def teacher_logout(request):
@@ -120,6 +125,7 @@ def teacher_logout(request):
 
 # ==================== PROFILE MANAGEMENT ====================
 
+@swagger_auto_schema(method='get', responses={200: TeacherSerializer})
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_teacher_profile(request):
@@ -130,6 +136,8 @@ def get_teacher_profile(request):
     serializer = TeacherSerializer(teacher)
     return Response(serializer.data)
 
+@swagger_auto_schema(method='put', request_body=TeacherUpdateSerializer)
+@swagger_auto_schema(method='patch', request_body=TeacherUpdateSerializer)
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_teacher_profile(request):
@@ -154,20 +162,46 @@ def update_teacher_profile(request):
 
 # ==================== ADMIN ONLY ====================
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_teacher(request):
+class TeacherViewSet(viewsets.ModelViewSet):
     """
-    Admin creates teacher account
-    Auto-generates username: TCH001, TCH002, etc.
-    Password = same as username
-    """
-    # Check if current user is Admin
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+    TeacherViewSet provides CRUD operations for teacher management (Admin only).
     
-    serializer = TeacherCreateSerializer(data=request.data, context={'request': request})
-    if serializer.is_valid():
+    Endpoints:
+    - GET    /api/teachers/                    List all teachers
+    - POST   /api/teachers/                    Create teacher (auto-generates username)
+    - GET    /api/teachers/{id}/               Retrieve teacher
+    - PUT    /api/teachers/{id}/               Full update teacher
+    - PATCH  /api/teachers/{id}/               Partial update teacher
+    - DELETE /api/teachers/{id}/               Deactivate teacher
+    - PATCH  /api/teachers/{id}/reactivate/   Reactivate teacher
+    """
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'teacher_id'
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TeacherCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return TeacherUpdateSerializer
+        return TeacherSerializer
+    
+    def check_admin_permission(self):
+        """Check if current user is Admin"""
+        if self.request.user.teacher_profile.role != 'Admin':
+            raise PermissionError('Admin access required')
+    
+    def list(self, request, *args, **kwargs):
+        """List all teachers (Admin only)"""
+        self.check_admin_permission()
+        return super().list(request, *args, **kwargs)
+    
+    def create(self, request, *args, **kwargs):
+        """Create teacher account (Admin only). Auto-generates username: TCH001, TCH002, etc."""
+        self.check_admin_permission()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         result = serializer.create(serializer.validated_data)
         
         return Response({
@@ -178,35 +212,24 @@ def create_teacher(request):
             'is_first_login': True
         }, status=status.HTTP_201_CREATED)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def list_teachers(request):
-    """
-    List all teachers (Admin only)
-    """
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a single teacher"""
+        return super().retrieve(request, *args, **kwargs)
     
-    teachers = Teacher.objects.all()
-    serializer = TeacherSerializer(teachers, many=True)
-    return Response(serializer.data)
-
-@api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
-def delete_teacher(request, teacher_id):
-    """
-    Admin soft deletes teacher (sets status to Inactive)
-    """
-    # Check if current user is Admin
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
+    def update(self, request, *args, **kwargs):
+        """Full update teacher (Admin only)"""
+        self.check_admin_permission()
+        return super().update(request, *args, **kwargs)
     
-    try:
-        teacher = Teacher.objects.get(teacher_id=teacher_id)
-        
-        # Soft delete - only change status
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update teacher (Admin only)"""
+        self.check_admin_permission()
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Soft delete (deactivate) teacher (Admin only)"""
+        self.check_admin_permission()
+        teacher = self.get_object()
         teacher.status = 'Inactive'
         teacher.save()
         
@@ -216,24 +239,12 @@ def delete_teacher(request, teacher_id):
             'username': teacher.user.username,
             'status': teacher.status
         }, status=status.HTTP_200_OK)
-        
-    except Teacher.DoesNotExist:
-        return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
-
-@api_view(['PATCH'])
-@permission_classes([IsAuthenticated])
-def reactivate_teacher(request, teacher_id):
-    """
-    Admin reactivates teacher (sets status to Active)
-    """
-    # Check if user is Admin
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
     
-    try:
-        teacher = Teacher.objects.get(teacher_id=teacher_id)
-        
-        # Reactivate
+    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
+    def reactivate(self, request, teacher_id=None):
+        """Reactivate teacher (Admin only)"""
+        self.check_admin_permission()
+        teacher = self.get_object()
         teacher.status = 'Active'
         teacher.save()
         
@@ -243,113 +254,116 @@ def reactivate_teacher(request, teacher_id):
             'username': teacher.user.username,
             'status': teacher.status
         }, status=status.HTTP_200_OK)
+
+
+# ==================== TEACHER PROFILE ====================
+
+@swagger_auto_schema(method='get', responses={200: TeacherSerializer})
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_teacher_profile(request):
+    """
+    Get current teacher's profile
+    """
+    teacher = request.user.teacher_profile
+    serializer = TeacherSerializer(teacher)
+    return Response(serializer.data)
+
+@swagger_auto_schema(method='put', request_body=TeacherUpdateSerializer)
+@swagger_auto_schema(method='patch', request_body=TeacherUpdateSerializer)
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_teacher_profile(request):
+    """
+    Update own profile (name, email, contact, password)
+    """
+    teacher = request.user.teacher_profile
+    serializer = TeacherUpdateSerializer(teacher, data=request.data, partial=True)
+    
+    if serializer.is_valid():
+        serializer.save()
         
-    except Teacher.DoesNotExist:
-        return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
+        # Get updated teacher data
+        updated_teacher = Teacher.objects.get(teacher_id=teacher.teacher_id)
+        
+        return Response({
+            'message': 'Profile updated successfully',
+            'teacher': TeacherSerializer(updated_teacher).data
+        })
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ==================== TEACHER ASSIGNMENTS ====================
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def list_teacher_assignments(request):
+class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     """
-    List teacher assignments.
-    Optional filters: ?teacher_id=1&section_id=2&school_year_id=1
+    TeacherAssignmentViewSet provides CRUD operations for teacher assignments (Admin only).
+    
+    Endpoints:
+    - GET    /api/teacher-assignments/                   List assignments (with optional filters)
+    - POST   /api/teacher-assignments/                   Create assignment
+    - GET    /api/teacher-assignments/{id}/              Retrieve assignment
+    - PUT    /api/teacher-assignments/{id}/              Full update assignment
+    - PATCH  /api/teacher-assignments/{id}/              Partial update assignment
+    - DELETE /api/teacher-assignments/{id}/              Delete assignment
+    
+    Optional Query Parameters on List:
+    - ?teacher_id=1    Filter by teacher
+    - ?section_id=2    Filter by section
+    - ?school_year_id=1  Filter by school year
     """
-    assignments = TeacherAssignment.objects.all()
-
-    teacher_id = request.query_params.get('teacher_id')
-    section_id = request.query_params.get('section_id')
-    school_year_id = request.query_params.get('school_year_id')
-
-    if teacher_id:
-        assignments = assignments.filter(teacher__teacher_id=teacher_id)
-    if section_id:
-        assignments = assignments.filter(section__section_id=section_id)
-    if school_year_id:
-        assignments = assignments.filter(school_year__school_year_id=school_year_id)
-
-    serializer = TeacherAssignmentSerializer(assignments, many=True)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_teacher_assignment(request, assignment_id):
-    """
-    Retrieve a single teacher assignment.
-    """
-    try:
-        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
-    except TeacherAssignment.DoesNotExist:
-        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = TeacherAssignmentSerializer(assignment)
-    return Response(serializer.data)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def create_teacher_assignment(request):
-    """
-    Create teacher assignment. Admin only.
-    """
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
-
-    serializer = TeacherAssignmentSerializer(data=request.data)
-    if serializer.is_valid():
-        assignment = serializer.save()
-        return Response(
-            {
-                'message': 'Teacher assignment created successfully.',
-                'assignment': TeacherAssignmentSerializer(assignment).data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['PUT', 'PATCH'])
-@permission_classes([IsAuthenticated])
-def update_teacher_assignment(request, assignment_id):
-    """
-    Update teacher assignment. Admin only.
-    """
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
-
-    try:
-        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
-    except TeacherAssignment.DoesNotExist:
-        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = TeacherAssignmentSerializer(assignment, data=request.data, partial=True)
-    if serializer.is_valid():
-        updated_assignment = serializer.save()
-        return Response(
-            {
-                'message': 'Teacher assignment updated successfully.',
-                'assignment': TeacherAssignmentSerializer(updated_assignment).data,
-            }
-        )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
-def delete_teacher_assignment(request, assignment_id):
-    """
-    Delete teacher assignment. Admin only.
-    """
-    if request.user.teacher_profile.role != 'Admin':
-        return Response({'error': 'Admin access required'}, status=status.HTTP_403_FORBIDDEN)
-
-    try:
-        assignment = TeacherAssignment.objects.get(assignment_id=assignment_id)
-    except TeacherAssignment.DoesNotExist:
-        return Response({'error': 'Assignment not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    assignment.delete()
-    return Response({'message': 'Teacher assignment deleted successfully.'}, status=status.HTTP_200_OK)
+    queryset = TeacherAssignment.objects.all()
+    serializer_class = TeacherAssignmentSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'assignment_id'
+    
+    def check_admin_permission(self):
+        """Check if current user is Admin"""
+        if self.request.user.teacher_profile.role != 'Admin':
+            raise PermissionError('Admin access required')
+    
+    def get_queryset(self):
+        """Filter assignments based on query parameters"""
+        queryset = TeacherAssignment.objects.all()
+        
+        teacher_id = self.request.query_params.get('teacher_id')
+        section_id = self.request.query_params.get('section_id')
+        school_year_id = self.request.query_params.get('school_year_id')
+        
+        if teacher_id:
+            queryset = queryset.filter(teacher__teacher_id=teacher_id)
+        if section_id:
+            queryset = queryset.filter(section__section_id=section_id)
+        if school_year_id:
+            queryset = queryset.filter(school_year__school_year_id=school_year_id)
+        
+        return queryset
+    
+    def list(self, request, *args, **kwargs):
+        """List teacher assignments (optional filters)"""
+        return super().list(request, *args, **kwargs)
+    
+    def create(self, request, *args, **kwargs):
+        """Create teacher assignment (Admin only)"""
+        self.check_admin_permission()
+        return super().create(request, *args, **kwargs)
+    
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a single teacher assignment"""
+        return super().retrieve(request, *args, **kwargs)
+    
+    def update(self, request, *args, **kwargs):
+        """Full update teacher assignment (Admin only)"""
+        self.check_admin_permission()
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update teacher assignment (Admin only)"""
+        self.check_admin_permission()
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Delete teacher assignment (Admin only)"""
+        self.check_admin_permission()
+        return super().destroy(request, *args, **kwargs)

@@ -3,14 +3,14 @@ from . import views
 
 urlpatterns = [
     # List & Create
-    path('api/sections/', views.list_sections, name='list-sections'),
-    path('api/sections/create/', views.create_section, name='create-section'),
+    path('api/sections/', views.sections_list_create, name='sections-list-create'),
+    path('api/v1/sections/', views.sections_list_create, name='v1-sections-list-create'),
 
-    # Filter by grade level (dedicated route)
-    path('api/sections/grade-level/<int:grade_level_id>/', views.list_sections_by_grade_level, name='sections-by-grade-level'),
+    # Filter by grade level (custom action)
+    path('api/sections/grade-level/<int:grade_level_id>/', views.sections_by_grade_level, name='sections-by-grade-level'),
+    path('api/v1/sections/grade-level/<int:grade_level_id>/', views.sections_by_grade_level, name='v1-sections-by-grade-level'),
 
-    # Single section operations
-    path('api/sections/<int:section_id>/', views.get_section, name='get-section'),
-    path('api/sections/<int:section_id>/update/', views.update_section, name='update-section'),
-    path('api/sections/<int:section_id>/delete/', views.delete_section, name='delete-section'),
+    # Single section operations (GET, PUT, PATCH, DELETE)
+    path('api/sections/<int:section_id>/', views.section_detail, name='section-detail'),
+    path('api/v1/sections/<int:section_id>/', views.section_detail, name='v1-section-detail'),
 ]

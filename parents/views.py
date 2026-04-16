@@ -5,12 +5,14 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.renderers import JSONRenderer
 from django.contrib.auth import authenticate
+from drf_yasg.utils import swagger_auto_schema
 from .models import Parent
 from .serializers import ParentSerializer
 
 
 # ==================== AUTHENTICATION ====================
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def parent_login(request):
@@ -73,6 +75,7 @@ def parent_login(request):
         )
 
 
+@swagger_auto_schema(method='post')
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def parent_logout(request):
@@ -85,6 +88,7 @@ def parent_logout(request):
 
 # ==================== PROFILE MANAGEMENT ====================
 
+@swagger_auto_schema(method='get', responses={200: ParentSerializer})
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_parent_profile(request):
@@ -102,6 +106,7 @@ def get_parent_profile(request):
         )
 
 
+@swagger_auto_schema(method='get')
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_student_info(request):

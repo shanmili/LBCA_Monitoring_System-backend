@@ -1,29 +1,34 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
-urlpatterns = [
-    # Admin Registration
-    path('api/admin/register/', views.admin_register, name='admin-register'),
-    
-    # Authentication
-    path('api/admin/login/', views.admin_login, name='admin-login'),
-    path('api/teacher/login/', views.teacher_login, name='teacher-login'),
-    path('api/teacher/logout/', views.teacher_logout, name='teacher-logout'),
-    
-    # Profile Management
-    path('api/teacher/profile/', views.get_teacher_profile, name='teacher-profile'),
-    path('api/teacher/profile/update/', views.update_teacher_profile, name='teacher-profile-update'),
-    
-    # Admin Only
-    path('api/admin/teachers/create/', views.create_teacher, name='create-teacher'),
-    path('api/admin/teachers/', views.list_teachers, name='list-teachers'),
-    path('api/admin/teachers/<int:teacher_id>/delete/', views.delete_teacher, name='delete-teacher'),
-    path('api/admin/teachers/<int:teacher_id>/reactivate/', views.reactivate_teacher, name='reactivate-teacher'),
+# Configure routers for ViewSets
+router = DefaultRouter()
+router.register(r'teachers', views.TeacherViewSet, basename='teacher')
+router.register(r'teacher-assignments', views.TeacherAssignmentViewSet, basename='teacher-assignment')
 
-    # Teacher Assignments
-    path('api/teacher-assignments/', views.list_teacher_assignments, name='list-teacher-assignments'),
-    path('api/teacher-assignments/create/', views.create_teacher_assignment, name='create-teacher-assignment'),
-    path('api/teacher-assignments/<int:assignment_id>/', views.get_teacher_assignment, name='get-teacher-assignment'),
-    path('api/teacher-assignments/<int:assignment_id>/update/', views.update_teacher_assignment, name='update-teacher-assignment'),
-    path('api/teacher-assignments/<int:assignment_id>/delete/', views.delete_teacher_assignment, name='delete-teacher-assignment'),
+urlpatterns = [
+    # ViewSet routes (REST endpoints)
+    path('api/', include(router.urls)),
+    path('api/v1/', include(router.urls)),
+    
+    # Authentication endpoints (custom routes)
+    path('api/admin/register/', views.admin_register, name='admin-register'),
+    path('api/v1/admin/register/', views.admin_register, name='v1-admin-register'),
+    
+    path('api/admin/login/', views.admin_login, name='admin-login'),
+    path('api/v1/admin/login/', views.admin_login, name='v1-admin-login'),
+    
+    path('api/teacher/login/', views.teacher_login, name='teacher-login'),
+    path('api/v1/teacher/login/', views.teacher_login, name='v1-teacher-login'),
+    
+    path('api/teacher/logout/', views.teacher_logout, name='teacher-logout'),
+    path('api/v1/teacher/logout/', views.teacher_logout, name='v1-teacher-logout'),
+    
+    # Profile endpoints (custom routes)
+    path('api/teacher/profile/', views.get_teacher_profile, name='teacher-profile'),
+    path('api/v1/teacher/profile/', views.get_teacher_profile, name='v1-teacher-profile'),
+    
+    path('api/teacher/profile/update/', views.update_teacher_profile, name='teacher-profile-update'),
+    path('api/v1/teacher/profile/update/', views.update_teacher_profile, name='v1-teacher-profile-update'),
 ]
