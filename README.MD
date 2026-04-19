@@ -91,6 +91,22 @@ python manage.py runserver
 
 The API will be available at `http://127.0.0.1:8000/`
 
+### 7. HTTPS-ready configuration
+The backend is configured for HTTPS-aware behavior (secure cookies, trusted proxy SSL headers, HSTS toggle).
+
+Use these environment variables when running behind HTTPS (for example, via Nginx/Cloudflare/Render/Heroku proxy):
+
+```bash
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SESSION_COOKIE_SECURE=True
+DJANGO_CSRF_COOKIE_SECURE=True
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+DJANGO_SECURE_HSTS_PRELOAD=True
+```
+
+For plain local HTTP testing, keep `DJANGO_SECURE_SSL_REDIRECT=False`.
+
 ---
 
 ## 🗄️ Database Schema (ERD Summary)
