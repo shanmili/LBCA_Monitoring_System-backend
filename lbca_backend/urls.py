@@ -42,6 +42,7 @@ urlpatterns = [
     path('', include('subjects.urls')),
     path('', include('schedules.urls')),
     path('', include('student_pace.urls')),
+    path('', include('data_quality_log.urls')),
     path('api/', include('students.urls')),
 ]
 

@@ -1,13 +1,17 @@
 from rest_framework import serializers
 from .models import ClassSchedule
+from sections.models import Section
 
 
 class ClassScheduleSerializer(serializers.ModelSerializer):
-    section_code = serializers.CharField(source='section.section_code', read_only=True)
+    section_id = serializers.PrimaryKeyRelatedField(source='section', queryset=Section.objects.all())
+    time_start = serializers.TimeField(source='start_time')
+    time_end = serializers.TimeField(source='end_time')
+    classroom = serializers.CharField(source='room')
 
     class Meta:
         model = ClassSchedule
-        fields = ['schedule_id', 'section', 'section_code', 'day', 'start_time', 'end_time', 'room']
+        fields = ['schedule_id', 'section_id', 'day', 'time_start', 'time_end', 'classroom']
         read_only_fields = ['schedule_id']
 
     def validate(self, attrs):

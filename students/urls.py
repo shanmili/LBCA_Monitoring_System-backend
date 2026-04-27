@@ -8,4 +8,9 @@ router.register(r'enrollments', StudentEnrollmentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path(
+        'students/<int:student_id>/enrollments/',
+        StudentEnrollmentViewSet.as_view({'get': 'list_by_student'}),
+        name='student-enrollments-by-student',
+    ),
 ]

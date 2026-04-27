@@ -3,12 +3,15 @@ from .models import StudentPace, EarlyWarning
 
 
 class StudentPaceSerializer(serializers.ModelSerializer):
+    pace_id = serializers.IntegerField(source='id', read_only=True)
+    student_id = serializers.PrimaryKeyRelatedField(source='student', queryset=StudentPace._meta.get_field('student').remote_field.model.objects.all())
+    enrollment_id = serializers.PrimaryKeyRelatedField(source='enrollment', queryset=StudentPace._meta.get_field('enrollment').remote_field.model.objects.all())
     student_name = serializers.SerializerMethodField()
     
     class Meta:
         model = StudentPace
         fields = [
-            'id', 'student', 'student_name', 'enrollment',
+            'pace_id', 'student_id', 'student_name', 'enrollment_id',
             'subject', 'pace_percent', 'paces_behind',
             'created_at', 'updated_at'
         ]
@@ -19,14 +22,16 @@ class StudentPaceSerializer(serializers.ModelSerializer):
 
 
 class EarlyWarningSerializer(serializers.ModelSerializer):
+    warning_id = serializers.IntegerField(source='id', read_only=True)
+    student_id = serializers.PrimaryKeyRelatedField(source='student', queryset=EarlyWarning._meta.get_field('student').remote_field.model.objects.all())
+    enrollment_id = serializers.PrimaryKeyRelatedField(source='enrollment', queryset=EarlyWarning._meta.get_field('enrollment').remote_field.model.objects.all(), allow_null=True, required=False)
     student_name = serializers.SerializerMethodField()
-    teacher_name = serializers.CharField(source='teacher', read_only=False)
     
     class Meta:
         model = EarlyWarning
         fields = [
-            'id', 'student', 'student_name', 'enrollment',
-            'subject', 'teacher', 'teacher_name', 'risk_level',
+            'warning_id', 'student_id', 'student_name', 'enrollment_id',
+            'subject', 'teacher', 'risk_level',
             'paces_behind', 'pace_percent', 'attendance',
             'status', 'trend', 'last_activity',
             'created_at', 'updated_at'

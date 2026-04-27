@@ -6,6 +6,7 @@ from . import views
 router = DefaultRouter()
 router.register(r'teachers', views.TeacherViewSet, basename='teacher')
 router.register(r'teacher-assignments', views.TeacherAssignmentViewSet, basename='teacher-assignment')
+router.register(r'teacher-availabilities', views.TeacherAvailabilityViewSet, basename='teacher-availability')
 
 urlpatterns = [
     # ViewSet routes (REST endpoints)

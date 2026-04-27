@@ -73,3 +73,34 @@ class TeacherAssignment(models.Model):
 
     class Meta:
         ordering = ['school_year', 'section', 'subject']
+
+
+class TeacherAvailability(models.Model):
+    DAY_CHOICES = [
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+    ]
+
+    availability_id = models.AutoField(primary_key=True)
+    teacher = models.ForeignKey(
+        'teachers.Teacher',
+        on_delete=models.CASCADE,
+        related_name='availability_slots'
+    )
+    day = models.CharField(max_length=20, choices=DAY_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    location = models.CharField(max_length=100, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['teacher', 'day', 'start_time']
+
+    def __str__(self):
+        return f"{self.teacher.user.username} - {self.day} {self.start_time}-{self.end_time}"

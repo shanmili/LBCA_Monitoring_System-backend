@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
+from django.db import transaction
 from .models import SchoolYear
 from .serializers import SchoolYearSerializer
 
@@ -42,10 +43,11 @@ def school_years_list_create(request):
         
         serializer = SchoolYearSerializer(data=request.data)
         if serializer.is_valid():
-            if serializer.validated_data.get('is_current', False):
-                SchoolYear.objects.filter(is_current=True).update(is_current=False)
-            
-            school_year = serializer.save()
+            with transaction.atomic():
+                if serializer.validated_data.get('is_current', False):
+                    SchoolYear.objects.filter(is_current=True).update(is_current=False)
+
+                school_year = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -111,10 +113,11 @@ def school_year_detail(request, school_year_id):
         
         serializer = SchoolYearSerializer(school_year, data=request.data, partial=(request.method == 'PATCH'))
         if serializer.is_valid():
-            if serializer.validated_data.get('is_current', False):
-                SchoolYear.objects.exclude(school_year_id=school_year_id).update(is_current=False)
-            
-            serializer.save()
+            with transaction.atomic():
+                if serializer.validated_data.get('is_current', False):
+                    SchoolYear.objects.exclude(school_year_id=school_year_id).update(is_current=False)
+
+                serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

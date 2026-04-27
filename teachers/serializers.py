@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Teacher, TeacherAssignment
+from .models import Teacher, TeacherAssignment, TeacherAvailability
 
 class TeacherSerializer(serializers.ModelSerializer):
     """Serializer for viewing teacher data"""
@@ -177,3 +177,22 @@ class TeacherAssignmentSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+class TeacherAvailabilitySerializer(serializers.ModelSerializer):
+    teacher_id = serializers.PrimaryKeyRelatedField(source='teacher', queryset=Teacher.objects.all())
+
+    class Meta:
+        model = TeacherAvailability
+        fields = [
+            'availability_id',
+            'teacher_id',
+            'day',
+            'start_time',
+            'end_time',
+            'location',
+            'is_active',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['availability_id', 'created_at', 'updated_at']

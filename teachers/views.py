@@ -2,14 +2,15 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from drf_yasg.utils import swagger_auto_schema
-from .models import Teacher, TeacherAssignment
+from .models import Teacher, TeacherAssignment, TeacherAvailability
 from .serializers import (
     TeacherSerializer, AdminRegisterSerializer,
     TeacherCreateSerializer, TeacherUpdateSerializer,
-    TeacherAssignmentSerializer
+    TeacherAssignmentSerializer, TeacherAvailabilitySerializer
 )
 
 # ==================== AUTHENTICATION ====================
@@ -189,8 +190,8 @@ class TeacherViewSet(viewsets.ModelViewSet):
     
     def check_admin_permission(self):
         """Check if current user is Admin"""
-        if self.request.user.teacher_profile.role != 'Admin':
-            raise PermissionError('Admin access required')
+        if not hasattr(self.request.user, 'teacher_profile') or self.request.user.teacher_profile.role != 'Admin':
+            raise PermissionDenied('Admin access required')
     
     def list(self, request, *args, **kwargs):
         """List all teachers (Admin only)"""
@@ -320,8 +321,8 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
     
     def check_admin_permission(self):
         """Check if current user is Admin"""
-        if self.request.user.teacher_profile.role != 'Admin':
-            raise PermissionError('Admin access required')
+        if not hasattr(self.request.user, 'teacher_profile') or self.request.user.teacher_profile.role != 'Admin':
+            raise PermissionDenied('Admin access required')
     
     def get_queryset(self):
         """Filter assignments based on query parameters"""
@@ -367,3 +368,61 @@ class TeacherAssignmentViewSet(viewsets.ModelViewSet):
         """Delete teacher assignment (Admin only)"""
         self.check_admin_permission()
         return super().destroy(request, *args, **kwargs)
+
+
+class TeacherAvailabilityViewSet(viewsets.ModelViewSet):
+    """
+    CRUD operations for teacher availability.
+    - GET endpoints require authentication.
+    - POST/PUT/PATCH/DELETE require admin role.
+    """
+    queryset = TeacherAvailability.objects.all()
+    serializer_class = TeacherAvailabilitySerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'availability_id'
+
+    def check_admin_permission(self):
+        if not hasattr(self.request.user, 'teacher_profile') or self.request.user.teacher_profile.role != 'Admin':
+            raise PermissionDenied('Admin access required')
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        self.check_admin_permission()
+        response = super().create(request, *args, **kwargs)
+        return Response(
+            {
+                'message': 'Teacher availability created successfully.',
+                'availability': response.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def update(self, request, *args, **kwargs):
+        self.check_admin_permission()
+        response = super().update(request, *args, **kwargs)
+        return Response(
+            {
+                'message': 'Teacher availability updated successfully.',
+                'availability': response.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        self.check_admin_permission()
+        response = super().partial_update(request, *args, **kwargs)
+        return Response(
+            {
+                'message': 'Teacher availability updated successfully.',
+                'availability': response.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        self.check_admin_permission()
+        self.get_object()
+        super().destroy(request, *args, **kwargs)
+        return Response({'message': 'Teacher availability deleted successfully.'}, status=status.HTTP_200_OK)
