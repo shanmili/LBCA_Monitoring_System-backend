@@ -4,6 +4,7 @@ from django.views.generic.base import RedirectView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.permissions import AllowAny
 from rest_framework.schemas import get_schema_view
+from .views import public_api_root
 
 try:
     from drf_yasg.views import get_schema_view as get_swagger_schema_view
@@ -35,6 +36,8 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/api/', permanent=False), name='root-redirect'),
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token'),
+    # Public API root (anonymous GET) — keep this before app includes so exact `/api/` is handled
+    path('api/', public_api_root, name='public-api-root'),
     path('api/v1/', include('students.urls')),
     path('api/schema/', openapi_schema_view, name='openapi-schema'),
     path('', include('teachers.urls')),
@@ -46,6 +49,7 @@ urlpatterns = [
     path('', include('schedules.urls')),
     path('', include('student_pace.urls')),
     path('', include('data_quality_log.urls')),
+    # include other API endpoints (non-root paths)
     path('api/', include('students.urls')),
 ]
 
