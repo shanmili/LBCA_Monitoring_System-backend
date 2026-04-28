@@ -36,23 +36,11 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/api/', permanent=False), name='root-redirect'),
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token'),
-    # Mount API root: prefer Swagger UI when available, otherwise serve a simple public root
-    
-    # If drf_yasg (Swagger) is available, show Swagger UI at `/api/` for a friendly API UI.
-    if get_swagger_schema_view:
-        urlpatterns = [
-            path('api/', swagger_schema_view.with_ui('swagger', cache_timeout=0), name='api-swagger'),
-        ]
-        # append the rest of our urlpatterns below by extending later
-    else:
-        urlpatterns = [
-            path('api/', public_api_root, name='public-api-root'),
-        ]
-
-    # include v1 app routes after the API root mapping
-    urlpatterns += [
-        path('api/v1/', include('students.urls')),
-    ]
+    # Always expose a safe public API root at `/api/` (anonymous GET) which won't
+    # run schema generation or other expensive imports that can fail in deployed
+    # environments. Swagger UI (if available) will live at `/swagger/`.
+    path('api/', public_api_root, name='public-api-root'),
+    path('api/v1/', include('students.urls')),
     path('api/schema/', openapi_schema_view, name='openapi-schema'),
     path('', include('teachers.urls')),
     path('', include('parents.urls')),
@@ -63,18 +51,6 @@ urlpatterns = [
     path('', include('schedules.urls')),
     path('', include('student_pace.urls')),
     path('', include('data_quality_log.urls')),
-    # include other API endpoints (non-root paths)
-    # non-root API includes (other apps will be mounted below)
-    path('', include('teachers.urls')),
-    path('', include('parents.urls')),
-    path('', include('school_years.urls')),
-    path('', include('grade_levels.urls')),
-    path('', include('sections.urls')),
-    path('', include('subjects.urls')),
-    path('', include('schedules.urls')),
-    path('', include('student_pace.urls')),
-    path('', include('data_quality_log.urls')),
-    # keep students app included under /api/ already via urlpatterns += above
 ]
 
 if get_swagger_schema_view:
