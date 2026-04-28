@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    'drf_yasg',
+    'drf_spectacular',
     'teachers',
     'students',
     'parents',
@@ -167,6 +167,7 @@ SECURE_HSTS_PRELOAD = os.getenv('DJANGO_SECURE_HSTS_PRELOAD', 'True').lower() ==
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
@@ -196,6 +197,24 @@ SWAGGER_SETTINGS = {
             'in': 'header',
             'description': 'Use format: Token <your_token>',
         },
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'LBCA Monitoring System API',
+    'DESCRIPTION': 'API documentation for LBCA Monitoring System',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'tokenAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'tokenAuth': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+                'description': 'Use format: Token <your_token>',
+            }
+        }
     },
 }
 
