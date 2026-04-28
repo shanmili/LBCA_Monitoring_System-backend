@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic.base import RedirectView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.permissions import AllowAny
 from rest_framework.schemas import get_schema_view
@@ -30,6 +31,8 @@ if get_swagger_schema_view:
     )
 
 urlpatterns = [
+    # Redirect site root to API base so visiting the app URL shows the API
+    path('', RedirectView.as_view(url='/api/', permanent=False), name='root-redirect'),
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token'),
     path('api/v1/', include('students.urls')),
