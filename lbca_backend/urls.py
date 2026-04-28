@@ -36,9 +36,23 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/api/', permanent=False), name='root-redirect'),
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token'),
-    # Public API root (anonymous GET) — keep this before app includes so exact `/api/` is handled
-    path('api/', public_api_root, name='public-api-root'),
-    path('api/v1/', include('students.urls')),
+    # Mount API root: prefer Swagger UI when available, otherwise serve a simple public root
+    
+    # If drf_yasg (Swagger) is available, show Swagger UI at `/api/` for a friendly API UI.
+    if get_swagger_schema_view:
+        urlpatterns = [
+            path('api/', swagger_schema_view.with_ui('swagger', cache_timeout=0), name='api-swagger'),
+        ]
+        # append the rest of our urlpatterns below by extending later
+    else:
+        urlpatterns = [
+            path('api/', public_api_root, name='public-api-root'),
+        ]
+
+    # include v1 app routes after the API root mapping
+    urlpatterns += [
+        path('api/v1/', include('students.urls')),
+    ]
     path('api/schema/', openapi_schema_view, name='openapi-schema'),
     path('', include('teachers.urls')),
     path('', include('parents.urls')),
@@ -50,7 +64,17 @@ urlpatterns = [
     path('', include('student_pace.urls')),
     path('', include('data_quality_log.urls')),
     # include other API endpoints (non-root paths)
-    path('api/', include('students.urls')),
+    # non-root API includes (other apps will be mounted below)
+    path('', include('teachers.urls')),
+    path('', include('parents.urls')),
+    path('', include('school_years.urls')),
+    path('', include('grade_levels.urls')),
+    path('', include('sections.urls')),
+    path('', include('subjects.urls')),
+    path('', include('schedules.urls')),
+    path('', include('student_pace.urls')),
+    path('', include('data_quality_log.urls')),
+    # keep students app included under /api/ already via urlpatterns += above
 ]
 
 if get_swagger_schema_view:
