@@ -19,12 +19,12 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # App routes
-    path('', include('students.urls')),
-    path('', include('teachers.urls')),
-    path('', include('parents.urls')),
-    path('', include('school_years.urls')),
-    path('', include('grade_levels.urls')),
-    path('', include('sections.urls')),
+    path('api/students/', include('students.urls')),
+    path('api/teachers/', include('teachers.urls')),
+    path('api/parents/', include('parents.urls')),
+    path('api/school-years/', include('school_years.urls')),
+    path('api/grade-levels/', include('grade_levels.urls')),
+    path('api/sections/', include('sections.urls')),
     path('', include('subjects.urls')),
     path('', include('schedules.urls')),
     path('', include('student_pace.urls')),
