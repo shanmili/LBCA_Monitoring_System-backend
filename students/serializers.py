@@ -8,7 +8,12 @@ import uuid
 class StudentSerializer(serializers.ModelSerializer):
     student_id = serializers.IntegerField(source='id', read_only=True)
     login_id = serializers.CharField(source='user.username', read_only=True)
-    guardian_relationship = serializers.ChoiceField(source='relationship', choices=['Parent', 'Guardian', 'Other'])
+    guardian_relationship = serializers.ChoiceField(
+        source='relationship', 
+        choices=['Parent', 'Guardian', 'Other'],
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = Student
@@ -36,7 +41,7 @@ class StudentSerializer(serializers.ModelSerializer):
         return f"tmp_student_{uuid.uuid4().hex[:16]}"
 
     def create(self, validated_data):
-        relationship = validated_data.pop('relationship')
+        relationship = validated_data.pop('relationship', 'Parent')  # Default to 'Parent' if not provided
 
         with transaction.atomic():
             temp_username = self._generate_temporary_username()
@@ -101,7 +106,11 @@ class StudentEnrollmentWithStudentSerializer(serializers.Serializer):
     guardian_mid_name = serializers.CharField(required=False, allow_blank=True)
     guardian_last_name = serializers.CharField()
     guardian_contact = serializers.CharField()
-    guardian_relationship = serializers.ChoiceField(choices=['Parent', 'Guardian', 'Other'])
+    guardian_relationship = serializers.ChoiceField(
+        choices=['Parent', 'Guardian', 'Other'],
+        required=False,
+        allow_null=True
+    )
     grade_level_id = serializers.IntegerField()
     section_id = serializers.IntegerField()
     school_year_id = serializers.IntegerField()
@@ -120,7 +129,7 @@ class StudentEnrollmentWithStudentSerializer(serializers.Serializer):
             'guardian_mid_name': validated_data.pop('guardian_mid_name', None),
             'guardian_last_name': validated_data.pop('guardian_last_name'),
             'guardian_contact': validated_data.pop('guardian_contact'),
-            'guardian_relationship': validated_data.pop('guardian_relationship'),
+            'guardian_relationship': validated_data.pop('guardian_relationship', 'Parent'),  # Default to 'Parent'
         }
 
         try:
