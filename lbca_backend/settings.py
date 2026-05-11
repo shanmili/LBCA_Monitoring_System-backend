@@ -26,7 +26,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ce1we#%iuy^&e5n2s46svlibet
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+# Parse ALLOWED_HOSTS from environment, handling whitespace
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
+# For Render: Allow wildcard in development if needed (set ALLOWED_HOSTS=* on Render if debugging)
+if '*' not in ALLOWED_HOSTS and not DEBUG:
+    # Production: be strict about allowed hosts
+    pass
 
 
 # Application definition
@@ -145,23 +150,33 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Build CORS origins list
 CORS_ALLOWED_ORIGINS = [
     "https://lbca-monitoring-system.onrender.com",
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://localhost:5173',
-    'https://127.0.0.1:5173',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://localhost:5173",
+    "https://127.0.0.1:5173",
 ]
+
+# Add frontend URL from environment if provided (Render)
+frontend_url = os.getenv('FRONTEND_URL')
+if frontend_url and frontend_url not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(frontend_url)
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://lbca-monitoring-system.onrender.com",
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://localhost:5173',
-    'https://127.0.0.1:5173',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://localhost:5173",
+    "https://127.0.0.1:5173",
 ]
+
+# Add frontend URL to CSRF if provided (Render)
+if frontend_url and frontend_url not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(frontend_url)
 
 # Allow specific headers
 CORS_ALLOW_HEADERS = [

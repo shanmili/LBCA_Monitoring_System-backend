@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: lbca-monitoring-system-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn lbca_backend.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: lbca-monitoring-system-backend.onrender.com
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "True"
+      - key: DJANGO_SESSION_COOKIE_SECURE
+        value: "True"
+      - key: DJANGO_CSRF_COOKIE_SECURE
+        value: "True"
+      - key: DJANGO_SECURE_HSTS_SECONDS
+        value: "31536000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lbca-postgres
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+    preDeployCommand: python manage.py migrate && python django_seed_admin.py || echo "Migration/seed already done or failed gracefully"

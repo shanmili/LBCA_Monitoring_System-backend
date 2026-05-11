@@ -5,6 +5,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.permissions import AllowAny
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from .views import public_api_root
+from .init_views import init_database, init_status
 from teachers.views import admin_register, admin_login, teacher_login, teacher_logout, get_teacher_profile
 
 urlpatterns = [
@@ -18,6 +19,10 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
+    # Render initialization endpoints (use only once on deployment)
+    path('api/init/status/', init_status, name='init-status'),
+    path('api/init/database/', init_database, name='init-database'),
 
     # Authentication endpoints (MUST be before teachers.urls to avoid double nesting)
     path('api/admin/register/', admin_register, name='admin-register'),
