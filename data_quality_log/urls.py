@@ -7,5 +7,4 @@ router.register(r'data-quality-logs', DataQualityLogViewSet, basename='data-qual
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    path('api/v1/', include(router.urls)),
 ]
