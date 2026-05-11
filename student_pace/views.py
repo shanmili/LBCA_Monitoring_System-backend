@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import StudentPace, EarlyWarning
 from .serializers import StudentPaceSerializer, EarlyWarningSerializer
+from lbca_backend.ai_service import AIBridge
 
 
 class StudentPaceViewSet(viewsets.ModelViewSet):
@@ -31,6 +32,45 @@ class StudentPaceViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(enrollment__id=enrollment_id)
         
         return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve student pace with AI prediction"""
+        pace = self.get_object()
+        serializer = self.get_serializer(pace)
+        response_data = serializer.data
+        
+        # AI Bridge: Predict student learning pace
+        pace_prediction = AIBridge.predict_student_pace({
+            'id': pace.id,
+            'student_id': pace.student.id,
+            'enrollment_id': pace.enrollment.id if pace.enrollment else None,
+            'current_pace': pace.current_pace,
+        })
+        
+        if pace_prediction:
+            response_data['ai_prediction'] = pace_prediction
+        
+        return Response(response_data)
+
+    def create(self, request, *args, **kwargs):
+        """Create student pace with AI prediction"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        pace = serializer.save()
+        
+        # AI Bridge: Predict pace for new record
+        pace_prediction = AIBridge.predict_student_pace({
+            'id': pace.id,
+            'student_id': pace.student.id,
+            'enrollment_id': pace.enrollment.id if pace.enrollment else None,
+            'current_pace': pace.current_pace,
+        })
+        
+        response_data = self.get_serializer(pace).data
+        if pace_prediction:
+            response_data['ai_prediction'] = pace_prediction
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class EarlyWarningViewSet(viewsets.ModelViewSet):
@@ -68,14 +108,31 @@ class EarlyWarningViewSet(viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 def get_student_pace(request, student_id):
     """
-    Get pace info for a specific student
+    Get pace info for a specific student with AI predictions
     """
     paces = StudentPace.objects.filter(student__id=student_id)
     if not paces.exists():
         return Response({'error': 'No pace records found for this student'}, status=status.HTTP_404_NOT_FOUND)
     
     serializer = StudentPaceSerializer(paces, many=True)
-    return Response(serializer.data)
+    response_data = serializer.data
+    
+    # AI Bridge: Get predictions for all paces
+    pace_predictions = []
+    for pace in paces:
+        prediction = AIBridge.predict_student_pace({
+            'id': pace.id,
+            'student_id': pace.student.id,
+            'enrollment_id': pace.enrollment.id if pace.enrollment else None,
+            'current_pace': pace.current_pace,
+        })
+        if prediction:
+            pace_predictions.append(prediction)
+    
+    return Response({
+        'paces': response_data,
+        'ai_predictions': pace_predictions if pace_predictions else None
+    })
 
 
 @api_view(['GET'])

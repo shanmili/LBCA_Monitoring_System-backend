@@ -12,6 +12,7 @@ from .serializers import (
     TeacherCreateSerializer, TeacherUpdateSerializer,
     TeacherAssignmentSerializer, TeacherAvailabilitySerializer
 )
+from lbca_backend.ai_service import AIBridge
 
 # ==================== AUTHENTICATION ====================
 
@@ -214,8 +215,23 @@ class TeacherViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_201_CREATED)
     
     def retrieve(self, request, *args, **kwargs):
-        """Retrieve a single teacher"""
-        return super().retrieve(request, *args, **kwargs)
+        """Retrieve a single teacher with AI analysis"""
+        response = super().retrieve(request, *args, **kwargs)
+        teacher = self.get_object()
+        
+        # AI Bridge: Analyze teacher performance/data
+        teacher_analysis = AIBridge.analyze_student({
+            'id': teacher.teacher_id,
+            'first_name': teacher.first_name,
+            'last_name': teacher.last_name,
+            'email': teacher.user.email if teacher.user else None,
+            'role': teacher.role,
+        })
+        
+        if teacher_analysis:
+            response.data['ai_analysis'] = teacher_analysis
+        
+        return response
     
     def update(self, request, *args, **kwargs):
         """Full update teacher (Admin only)"""

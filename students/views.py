@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Student, StudentEnrollment
 from .serializers import StudentSerializer, StudentEnrollmentSerializer, StudentEnrollmentWithStudentSerializer
+from lbca_backend.ai_service import AIBridge
 
 
 def is_admin(request):
@@ -31,25 +32,56 @@ class StudentViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.get_serializer(student)
-        return Response(serializer.data)
+        response_data = serializer.data
+        
+        # AI Bridge: Analyze student data
+        student_analysis = AIBridge.analyze_student({
+            'id': student.id,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.user.email if student.user else None,
+        })
+        
+        if student_analysis:
+            response_data['ai_analysis'] = student_analysis
+        
+        return Response(response_data)
 
     def create(self, request, *args, **kwargs):
         if not is_admin(request):
             return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
 
+        # AI Bridge: Validate student data before creation
+        ai_validation = AIBridge.validate_student_data(request.data)
+        if ai_validation and ai_validation.get('issues'):
+            return Response({
+                'error': 'Student data validation failed',
+                'ai_validation': ai_validation
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
 
-        return Response(
-            {
-                'message': 'Student created successfully.',
-                'student_login_id': student.user.username,
-                'student_login_password': student.user.username,
-                'student': self.get_serializer(student).data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        # AI Bridge: Generate recommendations for new student
+        recommendations = AIBridge.get_student_recommendations({
+            'id': student.id,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.user.email if student.user else None,
+        })
+
+        response_data = {
+            'message': 'Student created successfully.',
+            'student_login_id': student.user.username,
+            'student_login_password': student.user.username,
+            'student': self.get_serializer(student).data,
+        }
+        
+        if recommendations:
+            response_data['ai_recommendations'] = recommendations
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         if not is_admin(request):
@@ -115,17 +147,22 @@ class StudentEnrollmentViewSet(viewsets.ModelViewSet):
         if not is_admin(request):
             return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
 
+        # AI Bridge: Predict enrollment before creation
+        enrollment_prediction = AIBridge.predict_enrollment(request.data)
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         enrollment = serializer.save(enrolled_by=request.user)
 
-        return Response(
-            {
-                'message': 'Enrollment created successfully.',
-                'enrollment': self.get_serializer(enrollment).data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        response_data = {
+            'message': 'Enrollment created successfully.',
+            'enrollment': self.get_serializer(enrollment).data,
+        }
+        
+        if enrollment_prediction:
+            response_data['ai_prediction'] = enrollment_prediction
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
         enrollment_id = kwargs.get('pk')
@@ -135,7 +172,20 @@ class StudentEnrollmentViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Enrollment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.get_serializer(enrollment)
-        return Response(serializer.data)
+        response_data = serializer.data
+        
+        # AI Bridge: Predict enrollment success/risk
+        enrollment_prediction = AIBridge.predict_enrollment({
+            'id': enrollment.id,
+            'student_id': enrollment.student.id,
+            'section_id': enrollment.section.id if enrollment.section else None,
+            'school_year_id': enrollment.school_year.school_year_id if enrollment.school_year else None,
+        })
+        
+        if enrollment_prediction:
+            response_data['ai_prediction'] = enrollment_prediction
+        
+        return Response(response_data)
 
     def update(self, request, *args, **kwargs):
         if not is_admin(request):
@@ -185,20 +235,47 @@ class StudentEnrollmentViewSet(viewsets.ModelViewSet):
         if not is_admin(request):
             return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
 
+        # AI Bridge: Validate student data before creating with enrollment
+        ai_validation = AIBridge.validate_student_data(request.data.get('student', {}))
+        if ai_validation and ai_validation.get('issues'):
+            return Response({
+                'error': 'Student data validation failed',
+                'ai_validation': ai_validation
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = StudentEnrollmentWithStudentSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         result = serializer.save()
 
-        return Response(
-            {
-                'message': 'Student and enrollment created successfully.',
-                'student_login_id': result['student'].user.username,
-                'student_login_password': result['student'].user.username,
-                'student': StudentSerializer(result['student']).data,
-                'enrollment': self.get_serializer(result['enrollment']).data,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        # AI Bridge: Generate recommendations and predict enrollment
+        recommendations = AIBridge.get_student_recommendations({
+            'id': result['student'].id,
+            'first_name': result['student'].first_name,
+            'last_name': result['student'].last_name,
+            'email': result['student'].user.email if result['student'].user else None,
+        })
+        
+        enrollment_prediction = AIBridge.predict_enrollment({
+            'id': result['enrollment'].id,
+            'student_id': result['enrollment'].student.id,
+            'section_id': result['enrollment'].section.id if result['enrollment'].section else None,
+            'school_year_id': result['enrollment'].school_year.school_year_id if result['enrollment'].school_year else None,
+        })
+
+        response_data = {
+            'message': 'Student and enrollment created successfully.',
+            'student_login_id': result['student'].user.username,
+            'student_login_password': result['student'].user.username,
+            'student': StudentSerializer(result['student']).data,
+            'enrollment': self.get_serializer(result['enrollment']).data,
+        }
+        
+        if recommendations:
+            response_data['ai_recommendations'] = recommendations
+        if enrollment_prediction:
+            response_data['ai_prediction'] = enrollment_prediction
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='by-student/(?P<student_id>[^/.]+)')
     def list_by_student(self, request, student_id=None):

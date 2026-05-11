@@ -6,6 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from .models import Section
 from .serializers import SectionSerializer
 from grade_levels.models import GradeLevel
+from lbca_backend.ai_service import AIBridge
 
 
 def is_admin(request):
@@ -48,7 +49,19 @@ def sections_list_create(request):
         serializer = SectionSerializer(data=request.data)
         if serializer.is_valid():
             section = serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_data = serializer.data
+            
+            # AI Bridge: Analyze new section
+            section_analysis = AIBridge.analyze_section_performance({
+                'id': section.section_id,
+                'name': section.section_name,
+                'grade_level_id': section.grade_level.grade_level_id if section.grade_level else None,
+            })
+            
+            if section_analysis:
+                response_data['ai_analysis'] = section_analysis
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -102,7 +115,19 @@ def section_detail(request, section_id):
     
     if request.method == 'GET':
         serializer = SectionSerializer(section)
-        return Response(serializer.data)
+        response_data = serializer.data
+        
+        # AI Bridge: Analyze section performance
+        section_analysis = AIBridge.analyze_section_performance({
+            'id': section.section_id,
+            'name': section.section_name,
+            'grade_level_id': section.grade_level.grade_level_id if section.grade_level else None,
+        })
+        
+        if section_analysis:
+            response_data['ai_analysis'] = section_analysis
+        
+        return Response(response_data)
     
     elif request.method in ['PUT', 'PATCH']:
         if not is_admin(request):
