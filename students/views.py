@@ -126,6 +126,56 @@ class StudentViewSet(viewsets.ModelViewSet):
         student.delete()
         return Response({'message': 'Student deleted successfully.'})
 
+    @action(detail=True, methods=['get'], url_path='ai-analysis')
+    def ai_analysis(self, request, pk=None):
+        """
+        Get AI analysis for a student including risk assessment and recommendations.
+        Endpoint: /api/students/{id}/ai-analysis/
+        
+        Returns:
+        {
+            "risk_probability": 78.5,
+            "confidence_score": 92.3,
+            "predicted_factors": [...],
+            "recommendations": [...]
+        }
+        """
+        try:
+            student = Student.objects.get(pk=pk)
+        except Student.DoesNotExist:
+            return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prepare student data for AI analysis
+        student_data = {
+            'id': student.id,
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.user.email if student.user else None,
+        }
+
+        # Get AI analysis from the model
+        ai_response = AIBridge.analyze_student(student_data)
+
+        # Transform AI response to match frontend expectations
+        response_data = {
+            'risk_probability': ai_response.get('risk_probability', 0.0) if ai_response else None,
+            'confidence_score': ai_response.get('confidence_score', 0.0) if ai_response else None,
+            'predicted_factors': ai_response.get('predicted_factors', []) if ai_response else [],
+            'recommendations': ai_response.get('recommendations', []) if ai_response else [],
+        }
+
+        # If AI service is unavailable, return a response indicating this
+        if not ai_response:
+            return Response({
+                'risk_probability': None,
+                'confidence_score': None,
+                'predicted_factors': [],
+                'recommendations': [],
+                'message': 'AI analysis currently unavailable. Please try again later.'
+            }, status=status.HTTP_200_OK)
+
+        return Response(response_data)
+
 class StudentEnrollmentViewSet(viewsets.ModelViewSet):
     queryset = StudentEnrollment.objects.all()
     serializer_class = StudentEnrollmentSerializer
@@ -282,3 +332,53 @@ class StudentEnrollmentViewSet(viewsets.ModelViewSet):
         enrollments = self.get_queryset().filter(student__id=student_id)
         serializer = self.get_serializer(enrollments, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='ai-prediction')
+    def ai_prediction(self, request, pk=None):
+        """
+        Get AI prediction for an enrollment including success probability and recommendations.
+        Endpoint: /api/enrollments/{id}/ai-prediction/
+        
+        Returns:
+        {
+            "success_probability": 78.5,
+            "confidence_score": 92.3,
+            "risk_factors": [...],
+            "recommendations": [...]
+        }
+        """
+        try:
+            enrollment = StudentEnrollment.objects.get(pk=pk)
+        except StudentEnrollment.DoesNotExist:
+            return Response({'error': 'Enrollment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prepare enrollment data for AI prediction
+        enrollment_data = {
+            'id': enrollment.id,
+            'student_id': enrollment.student.id,
+            'section_id': enrollment.section.id if enrollment.section else None,
+            'school_year_id': enrollment.school_year.school_year_id if enrollment.school_year else None,
+        }
+
+        # Get AI prediction from the model
+        ai_response = AIBridge.predict_enrollment(enrollment_data)
+
+        # Transform AI response to match frontend expectations
+        response_data = {
+            'success_probability': ai_response.get('success_probability', 0.0) if ai_response else None,
+            'confidence_score': ai_response.get('confidence_score', 0.0) if ai_response else None,
+            'risk_factors': ai_response.get('risk_factors', []) if ai_response else [],
+            'recommendations': ai_response.get('recommendations', []) if ai_response else [],
+        }
+
+        # If AI service is unavailable, return a response indicating this
+        if not ai_response:
+            return Response({
+                'success_probability': None,
+                'confidence_score': None,
+                'risk_factors': [],
+                'recommendations': [],
+                'message': 'AI prediction currently unavailable. Please try again later.'
+            }, status=status.HTTP_200_OK)
+
+        return Response(response_data)
